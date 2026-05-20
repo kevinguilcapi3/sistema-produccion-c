@@ -1,60 +1,84 @@
 #include <stdio.h>
 #include <string.h>
 #include "SistemaProduccion.h"
+#include "Validaciones.h"
+
+int leerEntero(char mensaje[]) {
+    int numero;
+    int resultado;
+
+    do {
+        printf("%s", mensaje);
+        resultado = scanf("%d", &numero);
+
+        if(resultado != 1) {
+            printf("Error: solo se permiten numeros enteros.\n");
+            while(getchar() != '\n');
+        } else {
+            while(getchar() != '\n');
+            return numero;
+        }
+
+    } while(1);
+}
+
+float leerFloat(char mensaje[]) {
+    float numero;
+    int resultado;
+
+    do {
+        printf("%s", mensaje);
+        resultado = scanf("%f", &numero);
+
+        if(resultado != 1) {
+            printf("Error: solo se permiten numeros.\n");
+            while(getchar() != '\n');
+        } else {
+            while(getchar() != '\n');
+            return numero;
+        }
+
+    } while(1);
+}
+
+void leerNombre(char mensaje[], char nombre[]) {
+    do {
+        printf("%s", mensaje);
+        scanf("%49s", nombre);
+        while(getchar() != '\n');
+
+    } while(!validarNombreSoloLetras(nombre));
+}
 
 void ingresarProductos(char nombres[MAX][50], int cantidades[], float tiempos[], float recursos[], int *n) {
 
     int i;
+    int cantidadProductos;
 
-    if(inventarioLleno(*n)) {
-        return;
-    }
+    do {
+        cantidadProductos = leerEntero("\nCuantos productos desea ingresar? Maximo 5: ");
+    } while(!validarCantidadProductos(cantidadProductos));
 
-    printf("\nCuantos productos desea ingresar? Maximo 5: ");
-    scanf("%d", n);
-
-    if(!validarNumeroProductos(*n)) {
-        return;
-    }
+    *n = cantidadProductos;
 
     for(i = 0; i < *n; i++) {
 
         printf("\nProducto %d\n", i + 1);
 
-        printf("Nombre: ");
-        scanf("%49s", nombres[i]);
+        leerNombre("Nombre: ", nombres[i]);
 
-        if(!validarNombre(nombres[i])) {
-            return;
-        }
+        do {
+            cantidades[i] = leerEntero("Cantidad demandada: ");
+        } while(!validarEnteroPositivo(cantidades[i]));
 
-        if(productoRepetido(nombres, i, nombres[i])) {
-            return;
-        }
+        do {
+            tiempos[i] = leerFloat("Tiempo por unidad: ");
+        } while(!validarDecimalPositivo(tiempos[i]));
 
-        printf("Cantidad demandada: ");
-        scanf("%d", &cantidades[i]);
-
-        if(!validarCantidad(cantidades[i])) {
-            return;
-        }
-
-        printf("Tiempo por unidad: ");
-        scanf("%f", &tiempos[i]);
-
-        if(!validarDecimalPositivo(tiempos[i])) {
-            return;
-        }
-
-        printf("Recursos por unidad: ");
-        scanf("%f", &recursos[i]);
-
-        if(!validarDecimalPositivo(recursos[i])) {
-            return;
-        }
+        do {
+            recursos[i] = leerFloat("Recursos por unidad: ");
+        } while(!validarDecimalPositivo(recursos[i]));
     }
-
-    printf("Productos registrados correctamente.\n");
 }
 
 int buscarProducto(char nombres[MAX][50], int n, char nombreBuscar[]) {
@@ -62,9 +86,7 @@ int buscarProducto(char nombres[MAX][50], int n, char nombreBuscar[]) {
     int i;
 
     for(i = 0; i < n; i++) {
-
         if(strcmp(nombres[i], nombreBuscar) == 0) {
-
             return i;
         }
     }
@@ -75,47 +97,29 @@ int buscarProducto(char nombres[MAX][50], int n, char nombreBuscar[]) {
 void editarProducto(char nombres[MAX][50], int cantidades[], float tiempos[], float recursos[], int n) {
 
     char nombreBuscar[50];
-
     int posicion;
 
-    printf("\nIngrese el nombre del producto a editar: ");
-    scanf("%49s", nombreBuscar);
+    leerNombre("\nIngrese el nombre del producto a editar: ", nombreBuscar);
 
     posicion = buscarProducto(nombres, n, nombreBuscar);
 
     if(posicion == -1) {
-
         printf("Producto no encontrado.\n");
-
     } else {
 
-        printf("Nuevo nombre: ");
-        scanf("%49s", nombres[posicion]);
+        leerNombre("Nuevo nombre: ", nombres[posicion]);
 
-        if(!validarNombre(nombres[posicion])) {
-            return;
-        }
+        do {
+            cantidades[posicion] = leerEntero("Nueva cantidad: ");
+        } while(!validarEnteroPositivo(cantidades[posicion]));
 
-        printf("Nueva cantidad: ");
-        scanf("%d", &cantidades[posicion]);
+        do {
+            tiempos[posicion] = leerFloat("Nuevo tiempo por unidad: ");
+        } while(!validarDecimalPositivo(tiempos[posicion]));
 
-        if(!validarCantidad(cantidades[posicion])) {
-            return;
-        }
-
-        printf("Nuevo tiempo por unidad: ");
-        scanf("%f", &tiempos[posicion]);
-
-        if(!validarDecimalPositivo(tiempos[posicion])) {
-            return;
-        }
-
-        printf("Nuevo recurso por unidad: ");
-        scanf("%f", &recursos[posicion]);
-
-        if(!validarDecimalPositivo(recursos[posicion])) {
-            return;
-        }
+        do {
+            recursos[posicion] = leerFloat("Nuevo recurso por unidad: ");
+        } while(!validarDecimalPositivo(recursos[posicion]));
 
         printf("Producto editado correctamente.\n");
     }
@@ -124,94 +128,62 @@ void editarProducto(char nombres[MAX][50], int cantidades[], float tiempos[], fl
 void eliminarProducto(char nombres[MAX][50], int cantidades[], float tiempos[], float recursos[], int *n) {
 
     char nombreBuscar[50];
-
-    char confirmar;
-
     int posicion;
-
     int i;
 
-    printf("\nIngrese el nombre del producto a eliminar: ");
-    scanf("%49s", nombreBuscar);
+    leerNombre("\nIngrese el nombre del producto a eliminar: ", nombreBuscar);
 
     posicion = buscarProducto(nombres, *n, nombreBuscar);
 
     if(posicion == -1) {
-
         printf("Producto no encontrado.\n");
-
     } else {
 
-        printf("Seguro que desea eliminar el producto? (s/n): ");
-        scanf(" %c", &confirmar);
-
-        if(confirmar == 's' || confirmar == 'S') {
-
-            for(i = posicion; i < *n - 1; i++) {
-
-                strcpy(nombres[i], nombres[i + 1]);
-
-                cantidades[i] = cantidades[i + 1];
-
-                tiempos[i] = tiempos[i + 1];
-
-                recursos[i] = recursos[i + 1];
-            }
-
-            (*n)--;
-
-            printf("Producto eliminado correctamente.\n");
-
-        } else {
-
-            printf("Eliminacion cancelada.\n");
+        for(i = posicion; i < *n - 1; i++) {
+            strcpy(nombres[i], nombres[i + 1]);
+            cantidades[i] = cantidades[i + 1];
+            tiempos[i] = tiempos[i + 1];
+            recursos[i] = recursos[i + 1];
         }
+
+        (*n)--;
+
+        printf("Producto eliminado correctamente.\n");
     }
 }
 
 void calcularProduccion(int cantidades[], float tiempos[], float recursos[], int n) {
 
     int i;
-
     float tiempoTotal = 0;
-
     float recursosTotal = 0;
-
     float tiempoDisponible;
-
     float recursosDisponible;
 
+    if(n == 0) {
+        printf("Primero debe ingresar productos.\n");
+        return;
+    }
+
     for(i = 0; i < n; i++) {
-
         tiempoTotal = tiempoTotal + cantidades[i] * tiempos[i];
-
         recursosTotal = recursosTotal + cantidades[i] * recursos[i];
     }
 
     printf("\nTiempo total requerido: %.2f\n", tiempoTotal);
-
     printf("Recursos totales requeridos: %.2f\n", recursosTotal);
 
-    printf("Ingrese tiempo disponible: ");
-    scanf("%f", &tiempoDisponible);
+    do {
+        tiempoDisponible = leerFloat("Ingrese tiempo disponible: ");
+    } while(!validarDecimalPositivo(tiempoDisponible));
 
-    if(!validarDecimalPositivo(tiempoDisponible)) {
-        return;
-    }
-
-    printf("Ingrese recursos disponibles: ");
-    scanf("%f", &recursosDisponible);
-
-    if(!validarDecimalPositivo(recursosDisponible)) {
-        return;
-    }
+    do {
+        recursosDisponible = leerFloat("Ingrese recursos disponibles: ");
+    } while(!validarDecimalPositivo(recursosDisponible));
 
     if(tiempoTotal <= tiempoDisponible && recursosTotal <= recursosDisponible) {
-
         printf("La fabrica SI puede cumplir con la demanda.\n");
-
     } else {
-
         printf("La fabrica NO puede cumplir con la demanda.\n");
     }
 }
